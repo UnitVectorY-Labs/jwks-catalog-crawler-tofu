@@ -38,9 +38,9 @@ resource "google_cloud_run_v2_job" "default" {
   deletion_protection = false
 
   template {
-    
+
     parallelism = 1
-    task_count = 1
+    task_count  = 1
 
     template {
 
@@ -69,3 +69,37 @@ resource "google_cloud_run_v2_job" "default" {
     }
   }
 }
+
+# Service account for Cloud Run services
+resource "google_service_account" "schedule_sa" {
+  project      = var.project_id
+  account_id   = "${var.name}-sc-sa"
+  display_name = "${var.name} Schedule Service Account"
+}
+
+resource "google_cloud_run_v2_job_iam_member" "invoke_permission" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_job.default.name
+  role     = "roles/run.jobsExecutor"
+  member   = "serviceAccount:${google_service_account.schedule_sa.email}"
+}
+
+resource "google_cloud_scheduler_job" "run_daily_job" {
+  name        = "${var.name}-job-runner"
+  project     = var.project_id
+  region      = var.region
+  schedule    = "0 1 * * *" # Runs daily at 1 AM
+  description = "Trigger Cloud Run job ${var.name} daily"
+
+  http_target {
+    uri = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/${var.name}:run"
+
+    http_method = "POST"
+
+    oauth_token {
+      service_account_email = google_service_account.schedule_sa.email
+    }
+  }
+}
+
