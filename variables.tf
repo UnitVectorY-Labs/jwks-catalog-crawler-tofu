@@ -49,3 +49,15 @@ variable "jwks_catalog_crawler_tag" {
   type        = string
   default     = "dev" # Default to the development version
 }
+
+variable "jwks_catalog_url" {
+  description = "The URL to the JWKS catalog YAML file"
+  type        = string
+  default     = "https://raw.githubusercontent.com/UnitVectorY-Labs/jwks-catalog/refs/heads/main/data/services.yaml"
+}
+
+variable "http_response_collector_pubsub_topic_name" {
+  description = "The name of the pubsub topic for the http-response-collector"
+  type        = string
+  default     = "http-response-collector-request"
+}
